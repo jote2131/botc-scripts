@@ -37,6 +37,7 @@ from scripts import (
     script_json,
     tables,
 )
+from scripts.redirects import get_safe_redirect_url
 
 
 class ScriptsListView(SingleTableMixin, FilterView):
@@ -725,11 +726,18 @@ class UserDeleteView(LoginRequiredMixin, generic.TemplateView):
         return HttpResponseRedirect("/")
 
 
+def redirect_to_next(request) -> HttpResponseRedirect:
+    """
+    Redirect to the "next" value submitted with a form, but only if it stays on this site.
+    """
+    return redirect(get_safe_redirect_url(request.POST.get("next"), request.get_host(), request.is_secure()))
+
+
 def get_script(request, pk: int) -> models.Script:
     try:
         script = models.Script.objects.get(pk=pk)
     except models.Script.DoesNotExist:
-        return redirect(request.POST["next"])
+        raise Http404("Script not found.")
     return script
 
 
@@ -747,7 +755,7 @@ def vote_for_script(request, pk: int) -> None:
         raise Http404()
     script = get_script(request, pk)
     update_user_related_script(models.Vote, request.user, script)
-    return redirect(request.POST["next"])
+    return redirect_to_next(request)
 
 
 def map_similar_scripts(data):
@@ -807,7 +815,7 @@ def favourite_script(request, pk: int) -> None:
         raise Http404()
     script = get_script(request, pk)
     update_user_related_script(models.Favourite, request.user, script)
-    return redirect(request.POST["next"])
+    return redirect_to_next(request)
 
 
 def translate_character(character_id: str, language: str) -> dict:
