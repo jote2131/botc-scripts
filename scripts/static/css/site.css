@@ -380,13 +380,8 @@ a { text-underline-offset: 2px; }
 html[data-theme="dark"] .table tbody tr:hover {
     background-color: rgba(138, 180, 248, 0.1);
 }
-.table-responsive-wrapper {
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-}
-.table-responsive-wrapper > table,
-.table-responsive-wrapper .table-container {
-    margin-bottom: 0;
+.table-responsive-wrapper .table {
+    border-bottom: 1px solid var(--border-color);
 }
 
 /* Pagination */
