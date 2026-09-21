@@ -11,6 +11,10 @@ from botc.settings import *
 
 SECRET_KEY = "test-secret-key-not-for-production"
 
+# Defined in botc.local / botc.production rather than the base settings.
+UPLOAD_DISABLED = False
+BANNER = None
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
