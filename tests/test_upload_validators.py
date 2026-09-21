@@ -54,6 +54,7 @@ def test_real_pdf_header_is_accepted_and_the_file_is_rewound():
         b"<html><script>alert(1)</script></html>",
         b"MZ\x90\x00 not a pdf",
         b"",
+        b"\n%PDF-1.7 preceded by junk",
     ],
 )
 def test_files_that_are_not_pdfs_are_rejected(content):

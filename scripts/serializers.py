@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
@@ -118,11 +117,9 @@ class ScriptUploadSerializer(serializers.ModelSerializer):
             if self.initial_data.get("script_type", None) is None:
                 errors.append("Script type is required.")
         if self.initial_data.get("content", None):
-            try:
-                upload_validators.validate_json_upload_size(self.initial_data.get("content"))
-            except DjangoValidationError as e:
-                errors.extend(e.messages)
-            else:
+            size_errors = upload_validators.json_upload_size_errors(self.initial_data.get("content"))
+            errors.extend(size_errors)
+            if not size_errors:
                 content = script_json.get_json_content(self.initial_data)
                 if not isinstance(content, list):
                     errors.append("Content must be a list of script items.")

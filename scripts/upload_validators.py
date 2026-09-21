@@ -5,7 +5,6 @@ from django.core.exceptions import ValidationError
 from scripts import constants
 
 PDF_SIGNATURE = b"%PDF-"
-PDF_SIGNATURE_WINDOW = 1024
 
 
 def _format_size(size_in_bytes: int) -> str:
@@ -43,6 +42,17 @@ def validate_json_upload_size(value) -> None:
     validate_max_size(value, constants.MAX_JSON_UPLOAD_BYTES)
 
 
+def json_upload_size_errors(value) -> list[str]:
+    """
+    Size errors for a JSON upload as a list of messages, empty when the upload is within the limit.
+    """
+    try:
+        validate_json_upload_size(value)
+    except ValidationError as e:
+        return e.messages
+    return []
+
+
 def validate_pdf_upload_size(value) -> None:
     validate_max_size(value, constants.MAX_PDF_UPLOAD_BYTES)
 
@@ -52,7 +62,7 @@ def validate_pdf_signature(value) -> None:
     Sanity check that an upload named .pdf really starts like a PDF. This is not full validation,
     it only stops arbitrary files (HTML, executables...) being hosted under a .pdf name.
     """
-    header = value.read(PDF_SIGNATURE_WINDOW)
+    header = value.read(len(PDF_SIGNATURE))
     value.seek(0)
-    if PDF_SIGNATURE not in header:
+    if not header.startswith(PDF_SIGNATURE):
         raise ValidationError("This file is not a valid PDF.", code="invalid_pdf")

@@ -20,7 +20,7 @@ class UploadSizeLimitMiddleware:
     def __call__(self, request):
         if request.method in BODY_METHODS and request.path.startswith(UPLOAD_PATH_PREFIXES):
             try:
-                content_length = int(request.META.get("CONTENT_LENGTH", ""))
+                content_length = int(request.headers.get("Content-Length", ""))
             except ValueError:
                 return HttpResponse("A Content-Length header is required.", status=411, content_type="text/plain")
             if content_length > constants.MAX_UPLOAD_REQUEST_BYTES:
