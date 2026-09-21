@@ -227,3 +227,14 @@ html[data-theme="dark"] .table-striped-traveller .text-dark,
 html[data-theme="dark"] .table-striped-fabled .text-dark {
     color: #212529 !important;
 }
+
+/* ---- World Cup fixtures ------------------------------------------------ */
+.worldcup-table .table-success {
+    background-color: #1e5631;
+    color: #ffffff !important;
+}
+.worldcup-table .table-success a {
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: underline;
+}
