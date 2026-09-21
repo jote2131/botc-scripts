@@ -3,11 +3,11 @@
 {% load bootstrap4 %}
 {% load botc_script_tags %}
 
-{% block title %}Upload a script - BotC Scripts{% endblock %}
+{% block title %}{% if form.fields.content %}Upload a script{% elif object %}Edit collection{% else %}New collection{% endif %} - BotC Scripts{% endblock %}
 
 {% block content %}
 
-<h1 class="h3 mb-3">Upload a script</h1>
+<h1 class="h3 mb-3">{% if form.fields.content %}Upload a script{% elif object %}Edit collection{% else %}New collection{% endif %}</h1>
 
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
