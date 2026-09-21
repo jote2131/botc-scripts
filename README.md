@@ -9,6 +9,30 @@ This is a database for hosting Blood on the Clocktower custom scripts. You can v
 - Filter scripts based on required characters or characters to exclude.
 - Option to vote for your favourite scripts
 
+## Tech stack
+
+Django 5 and Django REST Framework on PostgreSQL (13+, with the `pg_trgm` extension), managed with [`uv`](https://docs.astral.sh/uv/). Python 3.13+ is required.
+
+## Getting started
+
+See [DEVELOPMENT.md](./DEVELOPMENT.md) for setting up a local environment (Dev Container or manual), running the site, tests and linting.
+
+## Project layout
+
+- `botc/` - Django project: settings, URLs, storage and WSGI/ASGI entry points.
+- `scripts/` - the main app: models, views, filters, the REST API (`api/` routes), script JSON validation, templates, static files and management commands.
+- `tests/` - pytest suite.
+- `dev/` - Dockerfile/compose file for a local PostgreSQL database and `characters.json` fixture data.
+- `.devcontainer/` - VS Code Dev Container configuration.
+
+## API
+
+The site exposes a REST API under `/api/` (scripts, script IDs, collections, characters, statistics and translations). The browsable API root lists the available endpoints.
+
+## Contributing
+
+Bug reports, feature requests and script claims are welcome via the [issue templates](https://github.com/AdmiralGT/botc-scripts/issues/new/choose). For code changes, fork the repository, follow [DEVELOPMENT.md](./DEVELOPMENT.md), and make sure `uv run ruff check` and `uv run pytest tests/` pass before opening a pull request.
+
 ## Acknowledgements
 
 This site is not affiliated with The Pandemonium Institute. All roles and characters are the property of Steven Medway and The Pandemonium Institute.

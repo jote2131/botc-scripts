@@ -18,7 +18,7 @@ VS Code Dev Containers provides a fully configured development environment with 
 6. Visit [http://localhost:8000](http://localhost:8000)
 
 The dev container automatically:
-- Sets up Python 3.12 with `uv`
+- Sets up Python with `uv`
 - Installs all dependencies
 - Configures PostgreSQL with the required extensions
 - Runs database migrations
@@ -35,7 +35,7 @@ If you prefer not to use Dev Containers, you can set up the environment manually
 
 ## Database
 
-The site uses PostgreSQL as the backend database. The mimimum PostgreSQL version required in v13. The PostgreSQL database must have the `postgresql-contrib` debian installed. It is recommended that you use [docker compose](./dev/docker-compose.yml) to spin up the [attached Dockerfile](./dev/Dockerfile) as your PostgreSQL database.
+The site uses PostgreSQL as the backend database. The minimum PostgreSQL version required is v13. The PostgreSQL database must have the `postgresql-contrib` debian installed. It is recommended that you use [docker compose](./dev/docker-compose.yml) to spin up the [attached Dockerfile](./dev/Dockerfile) as your PostgreSQL database.
 
 In order to test the "Name" and "Author" search fields, you must apply the following migration to your database once it has been deployed.
 
@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
 
 This project uses [`uv`](https://docs.astral.sh/uv/) to manage python dependencies. Follow the [Installing uv](https://docs.astral.sh/uv/getting-started/installation/) guide to install uv.
 
-You can then install python environment using `uv sync`
+Python 3.13 or newer is required. You can then install the python environment using `uv sync`
 
 ### Creating the Config
 
@@ -115,9 +115,6 @@ If you use VSCode for as your IDE, you can use the following `settings.json` to 
 
 ```json
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -135,6 +132,36 @@ If you use VSCode for as your IDE, you can use the following `settings.json` to 
 }
 ```
 
+## Settings
+
+Settings live in `botc/settings.py`. `botc/local.py` (git-ignored, see above) is used for development and `botc/production.py` for the Azure deployment, where the values below are read from environment variables. The deployment itself is handled by the maintainer's GitHub workflows.
+
+| Setting | Effect |
+| --- | --- |
+| `UPLOAD_DISABLED` | Hides the upload form for everyone except staff. |
+| `BANNER` | Text shown as a banner at the top of every page, or `None` for no banner. |
+| `DISABLE_VALIDATORS` | Skips JSON validation of uploaded scripts (`scripts/validators.py`). Environment variable only, defaults to off. |
+| `CORS_ALLOW_ALL_ORIGINS` | Allows cross-origin `GET` requests to `/api/`. Environment variable only, defaults to off. |
+
+## Management commands
+
+Maintenance commands in `scripts/management/commands/`, run with `uv run python manage.py <command>`. They are safe to re-run, but back up the database before running them against production data.
+
+| Command | Purpose |
+| --- | --- |
+| `update_script_counts` | Recalculates the per-type character counts (Townsfolk, Outsiders, etc.) on every script version from its stored JSON. |
+| `update_homebrewiness` | Recalculates whether each script version is official, hybrid or homebrew, and syncs the Hybrid and Homebrew tags. The tags are looked up by hard-coded IDs (49 and 50) in the command, so update those if your database differs. |
+| `fix_latest_flags` | Ensures only the highest version of each script has `latest=True`. |
+| `delete_orphaned_scripts` | Lists and deletes scripts that have no versions. This deletes data without asking for confirmation. |
+
 ## Linting
 
 This project uses [Ruff](https://docs.astral.sh/ruff/#ruff) for linting. The GitHub workflow includes a lint using ruff, but before submitting any code for review, please ensure that ruff passes by running `uv run ruff check`
+
+## Testing
+
+Tests use [pytest](https://docs.pytest.org/) with the settings in `tests/settings.py`. Because the models depend on PostgreSQL features (`GinIndex`, `pg_trgm`), the tests need a running PostgreSQL database. The defaults match the CI service (`postgres`/`postgres` on `localhost:5432`) and can be overridden with the `TEST_DB_NAME`, `TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_USER` and `TEST_DB_PASSWORD` environment variables.
+
+`uv run pytest tests/`
+
+CI runs both ruff and pytest on every push and pull request.
