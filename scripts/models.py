@@ -159,8 +159,7 @@ class ScriptVersion(models.Model):
             models.Index(fields=["homebrewiness"], name="sv_homebrewiness_idx"),
             models.Index(fields=["edition"], name="sv_edition_idx"),
             models.Index(fields=["num_demons"], name="sv_num_demons_idx"),
-            # Advanced Search filters on all seven role counts with __in, but only num_demons
-            # (above) had an index.
+            # Advanced Search filters these with __in - only num_demons had an index.
             models.Index(fields=["num_townsfolk"], name="sv_num_townsfolk_idx"),
             models.Index(fields=["num_outsiders"], name="sv_num_outsiders_idx"),
             models.Index(fields=["num_minions"], name="sv_num_minions_idx"),

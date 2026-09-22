@@ -1340,11 +1340,7 @@ def create_characters_and_determine_homebrew_status(script_content: dict, script
     except requests.exceptions.Timeout:
         pass
 
-    # One bulk lookup instead of a query per character in the script - previously every
-    # upload issued its own ClocktowerCharacter.objects.get() for each character entry.
-    clocktower_characters = models.ClocktowerCharacter.objects.in_bulk(
-        [item.get("id", "") for item in script_content]
-    )
+    clocktower_characters = models.ClocktowerCharacter.objects.in_bulk([item.get("id", "") for item in script_content])
 
     for item in script_content:
         if item.get("id", "") == "_meta":
