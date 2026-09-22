@@ -1007,8 +1007,19 @@ class AddScriptToCollectionView(LoginRequiredMixin, generic.View):
     """
 
     def post(self, request, *args, **kwargs):
-        collection = models.Collection.objects.get(pk=request.POST.get("collection"))
-        script = models.ScriptVersion.objects.get(pk=request.POST.get("script_version"))
+        try:
+            collection = models.Collection.objects.get(pk=request.POST.get("collection"))
+        except models.Collection.DoesNotExist:
+            raise Http404("Unknown collection.")
+
+        if collection.owner != self.request.user:
+            raise Http404("Cannot edit a collection you don't own.")
+
+        try:
+            script = models.ScriptVersion.objects.get(pk=request.POST.get("script_version"))
+        except models.ScriptVersion.DoesNotExist:
+            raise Http404("Unknown script.")
+
         collection.scripts.add(script)
         return HttpResponseRedirect("/script/" + str(script.script.pk) + "/" + str(script.version))
 
