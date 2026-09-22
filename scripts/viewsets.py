@@ -106,9 +106,7 @@ class VersionViewSet(viewsets.ModelViewSet):
         # Either get the current script, or create a new one based on the name.
         script, created = models.Script.objects.get_or_create(name=serializer.validated_data.get("name"))
 
-        # Lock the script row for the rest of this transaction so a concurrent create/update/
-        # destroy for the same script (web or API) is serialized against this one rather than
-        # racing it - see issue #503.
+        # Lock the script row - see issue #503.
         models.Script.objects.select_for_update().get(pk=script.pk)
 
         user = request.user if request.user.is_authenticated else None

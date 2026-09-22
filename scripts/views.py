@@ -442,11 +442,8 @@ class ScriptUploadView(BaseScriptUploadView):
         # Either get the current script, or create a new one based on the name.
         script, created = models.Script.objects.get_or_create(name=script_name)
 
-        # Lock the script row for the rest of this transaction. Without this, two uploads
-        # racing for the same script (e.g. a delete immediately followed by a re-upload, or
-        # a double form submission) can both pass the "does this version exist" check below
-        # before either commits, creating two versions with the same version number that are
-        # both marked latest. https://github.com/AdmiralGT/botc-scripts/issues/503
+        # Lock the script row so a concurrent upload/delete for it is serialized against
+        # this one rather than racing it - see issue #503.
         models.Script.objects.select_for_update().get(pk=script.pk)
 
         # We only want to set the owner on newly created scripts, so if we've
@@ -580,9 +577,7 @@ class ScriptDeleteView(LoginRequiredMixin, generic.edit.BaseDeleteView):
         self.object: models.Script = self.get_object()
         script: models.Script = self.object
 
-        # Lock the script row for the rest of this transaction so a concurrent delete or
-        # upload for the same script (see issue #503) is serialized against this one rather
-        # than racing it.
+        # Lock the script row - see issue #503.
         models.Script.objects.select_for_update().get(pk=script.pk)
 
         try:
