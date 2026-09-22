@@ -132,9 +132,7 @@ def test_deleting_and_reuploading_the_same_version_concurrently_does_not_duplica
             client = Client()
             client.force_login(owner)
             barrier.wait(timeout=5)
-            response = client.post(
-                reverse("delete_script", kwargs={"pk": script.pk, "version": str(v2.version)})
-            )
+            response = client.post(reverse("delete_script", kwargs={"pk": script.pk, "version": str(v2.version)}))
             results.append(("delete", response.status_code))
         except Exception as e:  # noqa: BLE001 - surface any failure from the background thread to the main thread
             errors.append(e)
