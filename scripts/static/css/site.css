@@ -521,6 +521,20 @@ html[data-theme="dark"] .nav-tabs .nav-link:hover {
         align-items: center;
         border-bottom: 1px solid var(--border-color);
     }
+    /* No green "valid" ticks on phones; desktop keeps Bootstrap's styling */
+    .script-filter .form-control.is-valid {
+        border-color: var(--border-color);
+        background-image: none;
+        padding-right: 0.75rem;
+    }
+    .script-filter .custom-select.is-valid {
+        border-color: var(--border-color);
+        background-size: 8px 10px, 0 0;
+        padding-right: 1.75rem;
+    }
+    .script-filter .form-check-input.is-valid ~ .form-check-label {
+        color: inherit;
+    }
     .script-filter .form-control,
     .script-filter .custom-select {
         min-height: 44px;
