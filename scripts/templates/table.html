@@ -16,7 +16,7 @@
         var toggle = event.target.closest('.script-row-toggle');
         if (!toggle && event.target.closest('a, button, input, select, label, form, .modal')) { return; }
         var row = event.target.closest('.script-table tbody tr');
-        if (!row) { return; }
+        if (!row || !row.querySelector('.script-row-toggle')) { return; }
         var open = !row.classList.contains('is-open');
         document.querySelectorAll('.script-table tbody tr.is-open').forEach(function (other) {
             other.classList.remove('is-open');

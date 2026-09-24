@@ -293,16 +293,19 @@
     {% else %}
     <div class="tab-pane fade {% active_tab_status 'characters-tab' activetab %} col-sm-6" id="characters" role="tabpanel" aria-labelledby="characters-tab">
     {% endif %}
+        <ul class="character-team">
         {% for role in script_version.content %}
             {% if role.id != "_meta" %}
                 {% character_type_change script_version.content forloop.counter0 as newline %}
                 {% if newline %}
-                    <br>
+        </ul>
+        <ul class="character-team">
                 {% endif %}
                 {% character_colourisation role.id as character_colour %}
                 <li><span {{ character_colour }}>{% convert_id_to_friendly_text role.id %}</span></li>
             {% endif %}
         {% endfor %}
+        </ul>
     </div>
     {% if changes.items|length > 0 %}
     <div class="tab-pane fade col-sm-6" id="history" role="tabpanel" aria-labelledby="history-tab">

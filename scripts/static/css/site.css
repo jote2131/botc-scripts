@@ -415,6 +415,12 @@ html[data-theme="dark"] .nav-tabs .nav-link:hover {
     color: var(--muted-color);
 }
 
+/* ---- Script page characters ------------------------------------------ */
+.character-team {
+    padding-left: 0;
+    margin: 0 0 1.5rem;
+}
+
 /* ---- Filter bar ------------------------------------------------------- */
 .filter-search {
     display: flex;
@@ -684,6 +690,23 @@ html[data-theme="dark"] .nav-tabs .nav-link:hover {
     .script-table .cell-actions .modal {
         flex: none;
     }
+    .script-table .cell-actions .modal .btn,
+    .script-actions .modal .btn {
+        width: auto;
+        min-height: 0;
+        flex-direction: row;
+        font-size: 1rem;
+    }
+    .script-actions .modal form {
+        display: inline-block !important;
+        width: auto;
+    }
+    .script-row-toggle:focus:not(:focus-visible) {
+        box-shadow: none;
+    }
+    .script-table tr.is-open .cell-name {
+        white-space: normal;
+    }
     .script-table .cell-actions .btn {
         flex-direction: column;
         gap: 0.125rem;
@@ -745,11 +768,14 @@ html[data-theme="dark"] .nav-tabs .nav-link:hover {
     }
     #characters {
         columns: 2;
-        column-gap: 1rem;
+        column-gap: 2rem;
         padding-left: 1.5rem;
     }
-    #characters li {
+    #characters .character-team {
         break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+    #characters li {
         padding: 0.125rem 0;
     }
 
