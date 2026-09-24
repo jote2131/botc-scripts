@@ -9,21 +9,9 @@ This is a database for hosting Blood on the Clocktower custom scripts. You can v
 - Filter scripts based on required characters or characters to exclude.
 - Option to vote for your favourite scripts
 
-## Tech stack
-
-Django 5 and Django REST Framework on PostgreSQL (13+, with the `pg_trgm` extension), managed with [`uv`](https://docs.astral.sh/uv/). Python 3.13+ is required.
-
 ## Getting started
 
 See [DEVELOPMENT.md](./DEVELOPMENT.md) for setting up a local environment (Dev Container or manual), running the site, tests and linting.
-
-## Project layout
-
-- `botc/` - Django project: settings, URLs, storage and WSGI/ASGI entry points.
-- `scripts/` - the main app: models, views, filters, the REST API (`api/` routes), script JSON validation, templates, static files and management commands.
-- `tests/` - pytest suite.
-- `dev/` - Dockerfile/compose file for a local PostgreSQL database and `characters.json` fixture data.
-- `.devcontainer/` - VS Code Dev Container configuration.
 
 ## API
 
