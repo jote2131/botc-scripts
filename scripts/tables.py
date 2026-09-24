@@ -15,7 +15,7 @@ script_table_actions_class = {
 
 
 def cell(name, attrs):
-    """Copy column attrs, adding a cell-<name> class so the card layout in site.css can place it."""
+    """Add a cell-<name> class, used by the mobile card layout in site.css."""
     return {
         part: {**values, "class": f"{values.get('class', '')} cell-{name}".strip()}
         for part, values in {"td": {}, "th": {}, **attrs}.items()
@@ -67,20 +67,26 @@ class ScriptTable(tables.Table):
         template_name="script_table/likes.html",
         verbose_name="Likes",
         order_by=("-score"),
-        attrs=cell("likes", {
-            "td": {"class": "pl-2 pr-2 p-0 align-middle text-center"},
-            "th": {"class": "align-middle text-center"},
-        }),
+        attrs=cell(
+            "likes",
+            {
+                "td": {"class": "pl-2 pr-2 p-0 align-middle text-center"},
+                "th": {"class": "align-middle text-center"},
+            },
+        ),
     )
 
     num_favs = tables.TemplateColumn(
         template_name="script_table/favourites.html",
         verbose_name="Favs",
         order_by=("-num_favs"),
-        attrs=cell("favs", {
-            "td": {"class": "pl-2 pr-2 p-0 align-middle text-center"},
-            "th": {"class": "align-middle text-center"},
-        }),
+        attrs=cell(
+            "favs",
+            {
+                "td": {"class": "pl-2 pr-2 p-0 align-middle text-center"},
+                "th": {"class": "align-middle text-center"},
+            },
+        ),
     )
 
     actions = tables.TemplateColumn(
@@ -98,10 +104,13 @@ class ClocktowerTable(ScriptTable):
     tags = tables.TemplateColumn(
         orderable=False,
         template_name="tags.html",
-        attrs=cell("tags", {
-            "td": {"class": "pl-2 pr-2 p-0 align-middle text-center"},
-            "th": {"class": "pl-2 pr-2 p-0 align-middle text-center"},
-        }),
+        attrs=cell(
+            "tags",
+            {
+                "td": {"class": "pl-2 pr-2 p-0 align-middle text-center"},
+                "th": {"class": "pl-2 pr-2 p-0 align-middle text-center"},
+            },
+        ),
     )
 
     class Meta:

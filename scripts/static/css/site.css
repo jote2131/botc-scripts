@@ -467,6 +467,21 @@ html[data-theme="dark"] .nav-tabs .nav-link:hover {
     .script-filter .filter-fields {
         width: 100%;
     }
+    .script-filter .filter-fields label.sr-only {
+        position: static;
+        width: auto;
+        height: auto;
+        margin: 0 0 0.25rem;
+        overflow: visible;
+        clip: auto;
+        white-space: normal;
+        font-weight: 600;
+    }
+    .script-filter .filter-fields .form-group {
+        flex-direction: column;
+        align-items: stretch;
+        margin-bottom: 0.5rem !important;
+    }
     .script-filter .filter-fields > * {
         margin-left: 0 !important;
         margin-right: 0 !important;
@@ -546,7 +561,9 @@ html[data-theme="dark"] .nav-tabs .nav-link:hover {
         border-radius: var(--radius);
         box-shadow: var(--shadow);
     }
-    .script-table tbody tr:hover {
+    .script-table tbody tr:hover,
+    html[data-theme="dark"] .script-table tbody tr:hover,
+    html[data-theme="dark"] .table-striped .script-table tbody tr:nth-of-type(odd) {
         background-color: var(--card-bg);
     }
     .script-table tbody td {
