@@ -419,6 +419,10 @@ html[data-theme="dark"] .nav-tabs .nav-link:hover {
 .character-team {
     padding-left: 0;
     margin: 0 0 1.5rem;
+    margin-bottom: 1lh;
+}
+.character-team:last-child {
+    margin-bottom: 0;
 }
 
 /* ---- Filter bar ------------------------------------------------------- */
@@ -432,9 +436,6 @@ html[data-theme="dark"] .nav-tabs .nav-link:hover {
 }
 @media (min-width: 768px) {
     /* On wider screens the filter fields always show, inline with the search box. */
-    .filter-row {
-        align-items: center;
-    }
     .filter-fields.collapse,
     .filter-fields.collapsing {
         display: contents !important;
