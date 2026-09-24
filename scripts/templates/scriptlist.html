@@ -18,17 +18,24 @@
         </div>
         <div id="filter-fields" class="collapse filter-fields">
             {% bootstrap_form filter.form exclude='tags,search' layout='inline' form_group_class="mb-0 m-1" %}
+            <div class="filter-panel-actions d-md-none">
+                <button type="submit" class="btn btn-primary btn-shaded-text">Show results</button>
+                <a class="btn btn-outline-secondary" href="{{ request.path }}">Clear all</a>
+            </div>
         </div>
     </div>
     <div class="form-group row mb-0">
         <div class="container">
             <div class="row p-1">
-                {% bootstrap_button 'Filter' button_class='btn-primary' extra_classes="mr-1 btn-shaded-text" %}
-                {% bootstrap_button 'Clear' button_class='btn-outline-secondary' href=request.path %}
-                <div class="col">
+                {% bootstrap_button 'Filter' button_class='btn-primary' extra_classes="mr-1 btn-shaded-text d-none d-md-inline-block" %}
+                {% bootstrap_button 'Clear' button_class='btn-outline-secondary' href=request.path extra_classes="d-none d-md-inline-block" %}
+                <div class="col results-row">
                     <p class="results-count text-right" role="status" aria-live="polite">
                         Results: {{ table.rows|length }}
                     </p>
+                    {% if filter_count or filter.form.data.search %}
+                    <a class="d-md-none results-clear" href="{{ request.path }}">Clear filters</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
