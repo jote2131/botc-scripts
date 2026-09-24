@@ -13,6 +13,15 @@ script_table_actions_class = {
     "th": {"class": "align-middle text-center", "style": "width:15%"},
 }
 
+
+def cell(name, attrs):
+    """Copy column attrs, adding a cell-<name> class so the card layout in site.css can place it."""
+    return {
+        part: {**values, "class": f"{values.get('class', '')} cell-{name}".strip()}
+        for part, values in {"td": {}, "th": {}, **attrs}.items()
+    }
+
+
 script_table_class = {
     "td": {"class": "pl-1 p-0 pr-1 align-middle text-center", "style": "width:10%"},
     "th": {"class": "pl-1 p-0 pr-1 align-middle text-center", "style": "width:10%"},
@@ -47,38 +56,38 @@ class ScriptTable(tables.Table):
             "script",
             {"pk": tables.A("script.pk"), "version": tables.A("version")},
         ),
-        attrs={"td": {"class": "pl-2 pr-2 p-0 align-middle"}},
+        attrs=cell("name", {"td": {"class": "pl-2 pr-2 p-0 align-middle"}}),
     )
 
-    author = tables.Column(attrs=table_class)
+    author = tables.Column(attrs=cell("author", table_class))
 
-    script_type = tables.Column(attrs=table_class, verbose_name="Type")
+    script_type = tables.Column(attrs=cell("type", table_class), verbose_name="Type")
 
     score = tables.TemplateColumn(
         template_name="script_table/likes.html",
         verbose_name="Likes",
         order_by=("-score"),
-        attrs={
+        attrs=cell("likes", {
             "td": {"class": "pl-2 pr-2 p-0 align-middle text-center"},
             "th": {"class": "align-middle text-center"},
-        },
+        }),
     )
 
     num_favs = tables.TemplateColumn(
         template_name="script_table/favourites.html",
         verbose_name="Favs",
         order_by=("-num_favs"),
-        attrs={
+        attrs=cell("favs", {
             "td": {"class": "pl-2 pr-2 p-0 align-middle text-center"},
             "th": {"class": "align-middle text-center"},
-        },
+        }),
     )
 
     actions = tables.TemplateColumn(
         template_name="script_table/actions/default.html",
         orderable=False,
         verbose_name="",
-        attrs=script_table_actions_class,
+        attrs=cell("actions", script_table_actions_class),
     )
 
     def render_name(self, value, record):
@@ -89,14 +98,15 @@ class ClocktowerTable(ScriptTable):
     tags = tables.TemplateColumn(
         orderable=False,
         template_name="tags.html",
-        attrs={
+        attrs=cell("tags", {
             "td": {"class": "pl-2 pr-2 p-0 align-middle text-center"},
             "th": {"class": "pl-2 pr-2 p-0 align-middle text-center"},
-        },
+        }),
     )
 
     class Meta:
         model = ScriptVersion
+        attrs = {"class": "table script-table"}
         exclude = excluded_clocktower_version_fields
         sequence = (
             "name",
@@ -115,11 +125,12 @@ class UserClocktowerTable(ClocktowerTable):
         template_name="script_table/actions/authenticated.html",
         orderable=False,
         verbose_name="",
-        attrs=script_table_actions_class,
+        attrs=cell("actions", script_table_actions_class),
     )
 
     class Meta:
         model = ScriptVersion
+        attrs = {"class": "table script-table"}
         exclude = excluded_clocktower_version_fields
         sequence = (
             "name",
@@ -138,11 +149,12 @@ class CollectionClocktowerTable(UserClocktowerTable):
         template_name="script_table/actions/collection.html",
         orderable=False,
         verbose_name="",
-        attrs=script_table_actions_class,
+        attrs=cell("actions", script_table_actions_class),
     )
 
     class Meta:
         model = ScriptVersion
+        attrs = {"class": "table script-table"}
         exclude = excluded_clocktower_version_fields
         sequence = (
             "name",

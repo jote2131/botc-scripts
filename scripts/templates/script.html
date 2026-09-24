@@ -133,8 +133,8 @@
     </div>
 {% endif %}
 
-<div class="row">
-    <div class="col-md-auto pt-1 pr-0 h-75">
+<div class="row script-actions">
+    <div class="col-md-auto pt-1 pr-0 h-75 script-actions-wide">
         <form class="mb-0">
             <label for="selected_version" class="sr-only">Script version</label>
             <select class="custom-select" id="selected_version" name="selected_version" onchange="this.form.submit();">
@@ -144,7 +144,7 @@
             </select>    
         </form>
     </div>
-    <div class="col-md-auto pl-2 p-0 pt-1">
+    <div class="col-md-auto pl-2 p-0 pt-1 script-actions-wide">
         <a class="btn btn-primary" href="{{ script_tool_link }}" target="_blank" rel="noopener noreferrer">Open in Script Tool<span class="sr-only"> (opens in a new tab)</span></a>
     </div>
     <div class="col-md-auto pl-1 p-0">
@@ -202,8 +202,8 @@
     {% endif %}
     <div class="p-1 alert-messages text-center" role="status" aria-live="polite"></div>
 </div>
-<div class="row">
-    <div class="col-md-auto pl-3 pr-0 pt-0 pb-0">
+<div class="row edition-support">
+    <div class="col-auto pl-3 pr-0 pt-0 pb-0">
         Base 3: 
             {% if script_version.edition == 0 %}
                 {% bs_icon "check-circle-fill" color="green" extra_classes="pb-1" size="24px" %}<span class="sr-only">Supported</span>
@@ -211,7 +211,7 @@
                 {% bs_icon "x-circle-fill" color="red" extra_classes="pb-1" size="24px" %}<span class="sr-only">Not supported</span>
             {% endif %}
     </div>
-    <div class="col-md-auto pl-2 pr-0 pt-0 pb-0">
+    <div class="col-auto pl-2 pr-0 pt-0 pb-0">
         Kickstarter:
             {% if script_version.edition <= 1 %}
                 {% bs_icon "check-circle-fill" color="green" extra_classes="pb-1" size="24px" %}<span class="sr-only">Supported</span>
@@ -219,7 +219,7 @@
                 {% bs_icon "x-circle-fill" color="red" extra_classes="pb-1" size="24px" %}<span class="sr-only">Not supported</span>
             {% endif %}
     </div>
-    <div class="col-md-auto pl-2 pr-0 pt-0 pb-0">
+    <div class="col-auto pl-2 pr-0 pt-0 pb-0">
         Carousel:
             {% if script_version.edition <= 2 %}
                 {% bs_icon "check-circle-fill" color="green" extra_classes="pb-1" size="24px" %}<span class="sr-only">Supported</span>
@@ -228,7 +228,7 @@
             {% endif %}
     </div>
     {% if user.is_staff %}
-    <div class="col-md-auto pl-2 pr-0 pt-0 pb-0">
+    <div class="col-auto pl-2 pr-0 pt-0 pb-0">
         Script ID: {{ script_version.pk }}        
     </div>
     {% endif %}
