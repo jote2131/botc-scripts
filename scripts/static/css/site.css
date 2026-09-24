@@ -11,6 +11,7 @@
     --focus-ring: #0056b3;
     --radius: 0.5rem;
     --shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.06);
+    --row-open-bg: #f5f8fc;
     color-scheme: light;
 }
 html[data-theme="dark"] {
@@ -22,6 +23,7 @@ html[data-theme="dark"] {
     --muted-color: #b0b0b0;
     --focus-ring: #8ab4f8;
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --row-open-bg: #262626;
     color-scheme: dark;
 }
 
@@ -531,7 +533,7 @@ html[data-theme="dark"] .nav-tabs .nav-link:hover {
         flex-grow: 1;
     }
 
-    /* Script tables become a list of cards */
+    /* Script tables become a compact list; tapping a row shows its tags and actions */
     .script-table,
     .script-table tbody {
         display: block;
@@ -543,28 +545,41 @@ html[data-theme="dark"] .nav-tabs .nav-link:hover {
     .script-table thead {
         display: none;
     }
-    .script-table tbody tr,
-    .table-striped .script-table tbody tr:nth-of-type(odd) {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto auto;
-        grid-template-areas:
-            "name likes favs"
-            "author type type"
-            "tags tags tags"
-            "actions actions actions";
-        column-gap: 0.75rem;
-        row-gap: 0.25rem;
-        margin-bottom: 0.625rem;
-        padding: 0.75rem 0.875rem;
+    .script-table tbody {
         background-color: var(--card-bg);
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
-        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+    .script-table tbody tr,
+    .table-striped .script-table tbody tr:nth-of-type(odd),
+    html[data-theme="dark"] .table-striped .script-table tbody tr:nth-of-type(odd) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto 40px;
+        grid-template-areas:
+            "name likes favs expand"
+            "author type type expand"
+            "tags tags tags tags"
+            "actions actions actions actions";
+        column-gap: 0.625rem;
+        align-items: center;
+        min-height: 56px;
+        padding: 0.375rem 0.25rem 0.375rem 0.875rem;
+        background-color: var(--card-bg);
+        border-top: 1px solid var(--border-color);
+        cursor: pointer;
+    }
+    .script-table tbody tr:first-child {
+        border-top: 0;
     }
     .script-table tbody tr:hover,
-    html[data-theme="dark"] .script-table tbody tr:hover,
-    html[data-theme="dark"] .table-striped .script-table tbody tr:nth-of-type(odd) {
+    html[data-theme="dark"] .script-table tbody tr:hover {
         background-color: var(--card-bg);
+    }
+    .script-table tbody tr.is-open,
+    html[data-theme="dark"] .script-table tbody tr.is-open {
+        background-color: var(--row-open-bg);
+        padding-bottom: 0.875rem;
     }
     .script-table tbody td {
         display: block;
@@ -573,24 +588,34 @@ html[data-theme="dark"] .nav-tabs .nav-link:hover {
         border: 0;
         text-align: left !important;
         background: transparent !important;
+        min-width: 0;
     }
     .script-table .cell-name {
         grid-area: name;
-        font-size: 1.05rem;
+        font-size: 0.9375rem;
         font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .script-table .cell-likes,
+    .script-table .cell-favs {
+        font-size: 0.8125rem;
+        white-space: nowrap;
     }
     .script-table .cell-likes {
         grid-area: likes;
-        white-space: nowrap;
     }
     .script-table .cell-favs {
         grid-area: favs;
-        white-space: nowrap;
     }
     .script-table .cell-author,
     .script-table .cell-type {
-        font-size: 0.875rem;
+        font-size: 0.8125rem;
         color: var(--muted-color);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .script-table .cell-author {
         grid-area: author;
@@ -599,17 +624,45 @@ html[data-theme="dark"] .nav-tabs .nav-link:hover {
         grid-area: type;
         text-align: right !important;
     }
-    .script-table .cell-tags {
+    .script-table .cell-expand {
+        grid-area: expand;
+        align-self: stretch;
+        display: flex !important;
+        align-items: center;
+    }
+    .script-row-toggle {
+        width: 40px;
+        height: 44px;
+        padding: 0;
+        color: var(--muted-color);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .script-row-toggle svg {
+        transition: transform 0.15s ease;
+    }
+    .script-table tr.is-open .script-row-toggle svg {
+        transform: rotate(180deg);
+    }
+    .script-table .cell-tags,
+    .script-table .cell-actions {
+        display: none !important;
+    }
+    .script-table tr.is-open .cell-tags {
+        display: block !important;
         grid-area: tags;
+        margin-top: 0.5rem;
+        padding-right: 0.625rem !important;
     }
     .script-table .cell-tags .badge {
         margin-bottom: 0 !important;
     }
-    .script-table .cell-actions {
+    .script-table tr.is-open .cell-actions {
+        display: block !important;
         grid-area: actions;
-        margin-top: 0.5rem;
-        padding-top: 0.625rem !important;
-        border-top: 1px solid var(--border-color) !important;
+        margin-top: 0.625rem;
+        padding-right: 0.625rem !important;
     }
     .script-table .cell-actions > div {
         display: flex !important;
@@ -630,6 +683,15 @@ html[data-theme="dark"] .nav-tabs .nav-link:hover {
     }
     .script-table .cell-actions .modal {
         flex: none;
+    }
+    .script-table .cell-actions .btn {
+        flex-direction: column;
+        gap: 0.125rem;
+        font-size: 0.75rem;
+        line-height: 1.1;
+    }
+    .table-responsive-wrapper .script-table {
+        border-bottom: 0;
     }
 
     /* Script page */

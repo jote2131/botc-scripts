@@ -96,6 +96,13 @@ class ScriptTable(tables.Table):
         attrs=cell("actions", script_table_actions_class),
     )
 
+    expand = tables.TemplateColumn(
+        template_name="script_table/expand.html",
+        orderable=False,
+        verbose_name="",
+        attrs=cell("expand", {"td": {"class": "d-md-none"}, "th": {"class": "d-md-none"}}),
+    )
+
     def render_name(self, value, record):
         return f"{record.script.name} ({record.version})"
 
@@ -125,6 +132,7 @@ class ClocktowerTable(ScriptTable):
             "num_favs",
             "tags",
             "actions",
+            "expand",
         )
         orderable = True
 
@@ -149,6 +157,7 @@ class UserClocktowerTable(ClocktowerTable):
             "num_favs",
             "tags",
             "actions",
+            "expand",
         )
         orderable = True
 
@@ -173,6 +182,7 @@ class CollectionClocktowerTable(UserClocktowerTable):
             "num_favs",
             "tags",
             "actions",
+            "expand",
         )
         orderable = True
 
