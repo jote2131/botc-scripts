@@ -1,5 +1,6 @@
 """
-Tests for collection ownership: only the owner of a collection can edit it or add scripts to it.
+Tests for collection ownership: only the owner of a collection can edit it or add scripts to it,
+others get a 403. Unknown or malformed ids are a 404.
 
 These tests need a PostgreSQL database (see DEVELOPMENT.md).
 """
@@ -57,7 +58,7 @@ def test_a_different_user_cannot_add_a_script_to_someone_elses_collection(client
         {"collection": collection.pk, "script_version": script_version.pk},
     )
 
-    assert response.status_code == 404
+    assert response.status_code == 403
     assert collection.scripts.count() == 0
 
 
@@ -144,7 +145,7 @@ def test_a_different_user_cannot_view_the_edit_page(client):
 
     client.force_login(attacker)
 
-    assert client.get(f"/collection/{collection.pk}/edit").status_code == 404
+    assert client.get(f"/collection/{collection.pk}/edit").status_code == 403
 
 
 @pytest.mark.django_db
@@ -156,7 +157,7 @@ def test_a_different_user_cannot_edit_or_take_over_someone_elses_collection(clie
     client.force_login(attacker)
     response = client.post(f"/collection/{collection.pk}/edit", {"name": "Hijacked", "description": "", "notes": ""})
 
-    assert response.status_code == 404
+    assert response.status_code == 403
     collection.refresh_from_db()
     assert collection.name == "My Collection"
     assert collection.owner == owner
