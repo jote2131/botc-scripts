@@ -1,5 +1,16 @@
+from django.db.models import Func, IntegerField
+
 MASK_BITS = 512
-CORE_CHARACTER_TYPES = ("Townsfolk", "Outsider", "Minion", "Demon")
+
+
+class BitAnd(Func):
+    arg_joiner = " & "
+    template = "(%(expressions)s)"
+
+
+class BitCount(Func):
+    function = "bit_count"
+    output_field = IntegerField()
 
 
 def build_mask(content: list, bit_map: dict[str, int]) -> str:

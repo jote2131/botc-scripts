@@ -3,7 +3,8 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from scripts import models
-from scripts.character_mask import CORE_CHARACTER_TYPES, MASK_BITS, build_mask
+from scripts.character_mask import MASK_BITS, build_mask
+from scripts.models import CORE_CHARACTER_TYPES
 
 
 @receiver(pre_save, sender=models.ClocktowerCharacter)
@@ -25,7 +26,7 @@ def assign_bit_index(sender, instance, **kwargs):
 def update_masks_for_new_character(sender, instance, **kwargs):
     if not getattr(instance, "_bit_index_assigned", False) or instance.character_type not in CORE_CHARACTER_TYPES:
         return
-    bit_map = sender.mask_bit_map()
+    bit_map = sender.character_bit_index_mapping()
     versions = list(
         models.ScriptVersion.plain_objects.filter(content__contains=[{"id": instance.character_id}]).only("content")
     )

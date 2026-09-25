@@ -31,17 +31,14 @@ def test_mask_length_and_bits():
     assert len(result) == MASK_BITS
     assert result.count("1") == 22
     assert result[BIT_MAP["washerwoman"]] == "1"
+    assert result[BIT_MAP["marionette"]] == "0"
 
 
-@pytest.mark.parametrize("name", ["trouble_brewing.json", "trouble_brewing_with_meta.json"])
+@pytest.mark.parametrize("name", ["trouble_brewing.json", "strings_pulling.json"])
 def test_meta_ignored(name):
-    assert mask(load(name)) == mask(load("trouble_brewing.json"))
-
-
-def test_meta_first_in_both_scripts_is_identical():
-    meta = [{"id": "_meta", "name": "Test"}]
-    tb = [item for item in load("trouble_brewing.json") if item.get("id") != "_meta"]
-    assert mask(meta + tb) == mask(tb)
+    content = load(name)
+    meta = {"id": "_meta", "name": "Test"}
+    assert mask([meta, *content]) == mask([*content, meta]) == mask(content)
 
 
 def test_unknown_and_string_entries():

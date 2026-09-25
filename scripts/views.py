@@ -12,7 +12,6 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import TrigramSimilarity
-from django.db import connection
 from django.db.models import Case, Count, F, Prefetch, When
 from django.http import (
     FileResponse,
@@ -759,37 +758,6 @@ def vote_for_script(request, pk: int) -> None:
     return redirect_to_next(request)
 
 
-SIMILAR_SCRIPTS_SQL = """
-WITH candidates AS MATERIALIZED (
-    SELECT script_id, script_type,
-           bit_count(character_mask & %(mask)s::bit(512)) AS shared,
-           bit_count(character_mask) AS total
-    FROM scripts_scriptversion
-    WHERE latest AND homebrewiness = %(clocktower)s AND script_id <> %(script)s
-), ranked AS (
-    SELECT script_id, jaccard, category,
-           row_number() OVER (PARTITION BY category ORDER BY jaccard DESC, script_id) AS rank
-    FROM (
-        SELECT script_id,
-               shared::float / (total + %(count)s - shared) AS jaccard,
-               CASE
-                   WHEN shared = %(count)s AND total = %(count)s THEN 'identical'
-                   WHEN shared = %(count)s THEN 'containedIn'
-                   WHEN shared = total THEN 'contains'
-                   WHEN script_type = %(teensyville)s THEN 'teensyville'
-                   ELSE 'full'
-               END AS category
-        FROM candidates
-        WHERE shared > 0
-    ) grouped
-)
-SELECT category, script_id, (SELECT name FROM scripts_script WHERE id = script_id), round(jaccard * 100)
-FROM ranked
-WHERE rank <= 10
-ORDER BY category, rank
-"""
-
-
 # Seperate call to calculate similar scripts so we can lazy load it
 def get_similar_scripts(request, pk: int, version: str) -> JsonResponse:
     if request.method != "GET":
@@ -799,24 +767,13 @@ def get_similar_scripts(request, pk: int, version: str) -> JsonResponse:
     if current_script is None:
         raise Http404()
 
-    similar = {category: [] for category in ("identical", "containedIn", "contains", "full", "teensyville")}
+    similar = {category: [] for category in models.SIMILARITY_CATEGORIES}
     mask = current_script.character_mask
     if not mask or "1" not in mask:
         return JsonResponse(similar)
 
-    with connection.cursor() as cursor:
-        cursor.execute(
-            SIMILAR_SCRIPTS_SQL,
-            {
-                "mask": mask,
-                "count": mask.count("1"),
-                "script": current_script.script_id,
-                "clocktower": models.Homebrewiness.CLOCKTOWER.value,
-                "teensyville": models.ScriptTypes.TEENSYVILLE.value,
-            },
-        )
-        for category, script_pk, name, value in cursor.fetchall():
-            similar[category].append({"value": int(value), "name": name, "scriptPK": script_pk})
+    for category, script_pk, name, value in current_script.similar_scripts():
+        similar[category].append({"value": int(value), "name": name, "scriptPK": script_pk})
 
     return JsonResponse(similar)
 

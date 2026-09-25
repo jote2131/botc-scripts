@@ -1,7 +1,7 @@
 from django.db import migrations, models
 
 import scripts.models
-from scripts.character_mask import CORE_CHARACTER_TYPES, build_mask
+from scripts.character_mask import build_mask
 
 
 def assign_bit_indexes(apps, schema_editor):
@@ -14,11 +14,10 @@ def assign_bit_indexes(apps, schema_editor):
 def backfill_masks(apps, schema_editor):
     ClocktowerCharacter = apps.get_model("scripts", "ClocktowerCharacter")
     ScriptVersion = apps.get_model("scripts", "ScriptVersion")
-    bit_map = dict(
-        ClocktowerCharacter.objects.filter(character_type__in=CORE_CHARACTER_TYPES).values_list(
-            "character_id", "bit_index"
-        )
+    characters = ClocktowerCharacter.objects.filter(
+        character_type__in=scripts.models.CORE_CHARACTER_TYPES, bit_index__isnull=False
     )
+    bit_map = dict(characters.values_list("character_id", "bit_index"))
     batch = []
     for version in ScriptVersion.objects.only("pk", "content").iterator(chunk_size=500):
         version.character_mask = build_mask(version.content, bit_map)

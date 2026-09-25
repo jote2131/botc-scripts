@@ -4,10 +4,12 @@ from uuid import uuid4
 from django.contrib.auth.models import User
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
+from django.db.models import F, Value, Window
+from django.db.models.functions import Cast, Round, RowNumber
 from versionfield import VersionField
 
 from scripts import constants
-from scripts.character_mask import CORE_CHARACTER_TYPES, MASK_BITS, build_mask
+from scripts.character_mask import MASK_BITS, BitAnd, BitCount, build_mask
 from scripts.managers import CollectionManager, ScriptViewManager
 
 
@@ -49,6 +51,10 @@ class CharacterType(models.TextChoices):
     FABLED = "Fabled"
     LORIC = "Loric"
     UNKNOWN = "Unknown"
+
+
+CORE_CHARACTER_TYPES = (CharacterType.TOWNSFOLK, CharacterType.OUTSIDER, CharacterType.MINION, CharacterType.DEMON)
+SIMILARITY_CATEGORIES = ("identical", "containedIn", "contains", "full", "teensyville")
 
 
 class CharacterMaskField(models.Field):
@@ -151,10 +157,46 @@ class ScriptVersion(models.Model):
     def save(self, *args, **kwargs):
         update_fields = kwargs.get("update_fields")
         if update_fields is None or "content" in update_fields:
-            self.character_mask = build_mask(self.content, ClocktowerCharacter.mask_bit_map())
+            self.character_mask = build_mask(self.content, ClocktowerCharacter.character_bit_index_mapping())
             if update_fields is not None:
                 kwargs["update_fields"] = {*update_fields, "character_mask"}
         super().save(*args, **kwargs)
+
+    def similar_scripts(self, per_category: int = 10):
+        count = self.character_mask.count("1")
+        return (
+            self._similarity_candidates()
+            .annotate(similarity=self._jaccard_similarity(count), category=self._similarity_category(count))
+            .annotate(
+                rank=Window(RowNumber(), partition_by=F("category"), order_by=[F("similarity").desc(), "script_id"])
+            )
+            .filter(rank__lte=per_category)
+            .order_by("category", "rank")
+            .values_list("category", "script_id", "script__name", Round(F("similarity") * 100))
+        )
+
+    def _similarity_candidates(self):
+        mask = Cast(Value(self.character_mask), CharacterMaskField())
+        return (
+            ScriptVersion.plain_objects.filter(latest=True, homebrewiness=Homebrewiness.CLOCKTOWER)
+            .exclude(script_id=self.script_id)
+            .annotate(shared=BitCount(BitAnd("character_mask", mask)), total=BitCount("character_mask"))
+            .filter(shared__gt=0)
+        )
+
+    @staticmethod
+    def _jaccard_similarity(count: int):
+        return Cast("shared", models.FloatField()) / (F("total") + count - F("shared"))
+
+    @staticmethod
+    def _similarity_category(count: int):
+        return models.Case(
+            models.When(shared=count, total=count, then=Value("identical")),
+            models.When(shared=count, then=Value("containedIn")),
+            models.When(shared=F("total"), then=Value("contains")),
+            models.When(script_type=ScriptTypes.TEENSYVILLE, then=Value("teensyville")),
+            default=Value("full"),
+        )
 
     class Meta:
         permissions = [
@@ -340,7 +382,7 @@ class ClocktowerCharacter(BaseCharacter):
     bit_index = models.PositiveSmallIntegerField(unique=True, null=True, blank=True, editable=False)
 
     @classmethod
-    def mask_bit_map(cls) -> dict[str, int]:
+    def character_bit_index_mapping(cls) -> dict[str, int]:
         characters = cls.objects.filter(character_type__in=CORE_CHARACTER_TYPES, bit_index__isnull=False)
         return dict(characters.values_list("character_id", "bit_index"))
 
