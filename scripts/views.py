@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import TrigramSimilarity
+from django.db import connection
 from django.db.models import Case, Count, F, Prefetch, When
 from django.http import (
     FileResponse,
@@ -758,12 +759,35 @@ def vote_for_script(request, pk: int) -> None:
     return redirect_to_next(request)
 
 
-def map_similar_scripts(data):
-    return {
-        "value": data[1],
-        "name": data[0].script.name,
-        "scriptPK": data[0].script.pk,
-    }
+SIMILAR_SCRIPTS_SQL = """
+WITH candidates AS MATERIALIZED (
+    SELECT script_id, script_type,
+           bit_count(character_mask & %(mask)s::bit(512)) AS shared,
+           bit_count(character_mask) AS total
+    FROM scripts_scriptversion
+    WHERE latest AND homebrewiness = %(clocktower)s AND script_id <> %(script)s
+), ranked AS (
+    SELECT script_id, jaccard, category,
+           row_number() OVER (PARTITION BY category ORDER BY jaccard DESC, script_id) AS rank
+    FROM (
+        SELECT script_id,
+               shared::float / (total + %(count)s - shared) AS jaccard,
+               CASE
+                   WHEN shared = %(count)s AND total = %(count)s THEN 'identical'
+                   WHEN shared = %(count)s THEN 'containedIn'
+                   WHEN shared = total THEN 'contains'
+                   WHEN script_type = %(teensyville)s THEN 'teensyville'
+                   ELSE 'full'
+               END AS category
+        FROM candidates
+        WHERE shared > 0
+    ) grouped
+)
+SELECT category, script_id, (SELECT name FROM scripts_script WHERE id = script_id), round(jaccard * 100)
+FROM ranked
+WHERE rank <= 10
+ORDER BY category, rank
+"""
 
 
 # Seperate call to calculate similar scripts so we can lazy load it
@@ -771,43 +795,30 @@ def get_similar_scripts(request, pk: int, version: str) -> JsonResponse:
     if request.method != "GET":
         raise Http404()
 
-    current_script = models.ScriptVersion.objects.filter(script=pk, version=version)[0]
+    current_script = models.ScriptVersion.plain_objects.filter(script=pk, version=version).first()
+    if current_script is None:
+        raise Http404()
 
-    similarity = {}
-    similarity[models.ScriptTypes.TEENSYVILLE.value] = {}
-    similarity[models.ScriptTypes.FULL.value] = {}
-    for script_version in (
-        models.ScriptVersion.objects.filter(latest=True, homebrewiness=models.Homebrewiness.CLOCKTOWER)
-        .select_related("script")
-        .order_by("pk")
-    ):
-        if current_script == script_version:
-            continue
+    similar = {category: [] for category in ("identical", "containedIn", "contains", "full", "teensyville")}
+    mask = current_script.character_mask
+    if not mask or "1" not in mask:
+        return JsonResponse(similar)
 
-        similarity[script_version.script_type][script_version] = script_json.get_similarity(
-            current_script.content,
-            script_version.content,
-            current_script.script_type == script_version.script_type,
+    with connection.cursor() as cursor:
+        cursor.execute(
+            SIMILAR_SCRIPTS_SQL,
+            {
+                "mask": mask,
+                "count": mask.count("1"),
+                "script": current_script.script_id,
+                "clocktower": models.Homebrewiness.CLOCKTOWER.value,
+                "teensyville": models.ScriptTypes.TEENSYVILLE.value,
+            },
         )
-    teensville_scripts = map(
-        map_similar_scripts,
-        sorted(
-            similarity[models.ScriptTypes.TEENSYVILLE].items(),
-            key=lambda x: x[1],
-            reverse=True,
-        )[:10],
-    )
+        for category, script_pk, name, value in cursor.fetchall():
+            similar[category].append({"value": int(value), "name": name, "scriptPK": script_pk})
 
-    full_scripts = map(
-        map_similar_scripts,
-        sorted(
-            similarity[models.ScriptTypes.FULL].items(),
-            key=lambda x: x[1],
-            reverse=True,
-        )[:10],
-    )
-
-    return JsonResponse({"full": list(full_scripts), "teensyville": list(teensville_scripts)})
+    return JsonResponse(similar)
 
 
 def favourite_script(request, pk: int) -> None:

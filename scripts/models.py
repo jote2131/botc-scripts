@@ -7,6 +7,7 @@ from django.db import models
 from versionfield import VersionField
 
 from scripts import constants
+from scripts.character_mask import CORE_CHARACTER_TYPES, MASK_BITS, build_mask
 from scripts.managers import CollectionManager, ScriptViewManager
 
 
@@ -48,6 +49,11 @@ class CharacterType(models.TextChoices):
     FABLED = "Fabled"
     LORIC = "Loric"
     UNKNOWN = "Unknown"
+
+
+class CharacterMaskField(models.Field):
+    def db_type(self, connection):
+        return f"bit({MASK_BITS})"
 
 
 class Homebrewiness(models.IntegerChoices):
@@ -134,12 +140,21 @@ class ScriptVersion(models.Model):
     tags = models.ManyToManyField(ScriptTag, blank=True)
     edition = models.IntegerField(choices=Edition.choices, default=Edition.ALL)
     homebrewiness = models.IntegerField(choices=Homebrewiness.choices, default=Homebrewiness.CLOCKTOWER)
+    character_mask = CharacterMaskField(null=True, blank=True, editable=False)
 
     objects = ScriptViewManager()
     plain_objects = models.Manager()
 
     def __str__(self):
         return f"{self.pk}. {self.script.name} - v{self.version}"
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
+        if update_fields is None or "content" in update_fields:
+            self.character_mask = build_mask(self.content, ClocktowerCharacter.mask_bit_map())
+            if update_fields is not None:
+                kwargs["update_fields"] = {*update_fields, "character_mask"}
+        super().save(*args, **kwargs)
 
     class Meta:
         permissions = [
@@ -322,6 +337,12 @@ class ClocktowerCharacter(BaseCharacter):
     """
 
     edition = models.IntegerField(choices=Edition.choices)
+    bit_index = models.PositiveSmallIntegerField(unique=True, null=True, blank=True, editable=False)
+
+    @classmethod
+    def mask_bit_map(cls) -> dict[str, int]:
+        characters = cls.objects.filter(character_type__in=CORE_CHARACTER_TYPES, bit_index__isnull=False)
+        return dict(characters.values_list("character_id", "bit_index"))
 
     class Meta:
         permissions = [("update_characters", "Can update character information")]
