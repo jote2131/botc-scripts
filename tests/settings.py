@@ -1,6 +1,6 @@
 import os
 
-from botc.settings import *  # noqa: F403
+from botc.settings import *
 
 SECRET_KEY = "test-secret-key"
 UPLOAD_DISABLED = False
