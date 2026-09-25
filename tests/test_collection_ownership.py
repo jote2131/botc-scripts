@@ -1,9 +1,5 @@
 """
-Tests for adding scripts to a collection. AddScriptToCollectionView took the collection
-and script version straight from POST data with no check that the requesting user owned
-the collection, so any logged in user could add scripts to someone else's collection.
-Its sibling, RemoveScriptFromCollectionView, already checked ownership - this brings
-Add in line with it.
+Tests for collection ownership: only the owner of a collection can edit it or add scripts to it.
 
 These tests need a PostgreSQL database (see DEVELOPMENT.md).
 """
@@ -108,3 +104,59 @@ def test_unknown_script_version_is_a_404(client):
 
     assert response.status_code == 404
     assert collection.scripts.count() == 0
+
+
+@pytest.mark.django_db
+def test_malformed_collection_id_is_a_404(client):
+    owner = User.objects.create_user(username="owner", password="password")
+    script_version = make_script_version()
+
+    client.force_login(owner)
+    response = client.post(
+        reverse("add_to_collection"),
+        {"collection": "abc", "script_version": script_version.pk},
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_owner_can_edit_their_own_collection(client):
+    owner = User.objects.create_user(username="owner", password="password")
+    collection = models.Collection.objects.create(owner=owner, name="My Collection")
+
+    client.force_login(owner)
+    assert client.get(f"/collection/{collection.pk}/edit").status_code == 200
+
+    response = client.post(f"/collection/{collection.pk}/edit", {"name": "Renamed", "description": "", "notes": ""})
+
+    assert response.status_code == 302
+    collection.refresh_from_db()
+    assert collection.name == "Renamed"
+    assert collection.owner == owner
+
+
+@pytest.mark.django_db
+def test_a_different_user_cannot_view_the_edit_page(client):
+    owner = User.objects.create_user(username="owner", password="password")
+    attacker = User.objects.create_user(username="attacker", password="password")
+    collection = models.Collection.objects.create(owner=owner, name="My Collection")
+
+    client.force_login(attacker)
+
+    assert client.get(f"/collection/{collection.pk}/edit").status_code == 404
+
+
+@pytest.mark.django_db
+def test_a_different_user_cannot_edit_or_take_over_someone_elses_collection(client):
+    owner = User.objects.create_user(username="owner", password="password")
+    attacker = User.objects.create_user(username="attacker", password="password")
+    collection = models.Collection.objects.create(owner=owner, name="My Collection")
+
+    client.force_login(attacker)
+    response = client.post(f"/collection/{collection.pk}/edit", {"name": "Hijacked", "description": "", "notes": ""})
+
+    assert response.status_code == 404
+    collection.refresh_from_db()
+    assert collection.name == "My Collection"
+    assert collection.owner == owner
